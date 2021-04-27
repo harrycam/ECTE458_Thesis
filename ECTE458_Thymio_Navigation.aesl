@@ -27,7 +27,9 @@
 
 
 <!--node Thymio-II Wireless-->
-<node nodeId="{7b3a7760-96f3-4fa2-9f43-d2dbad6b6eb8}" name="Thymio-II Wireless"><![CDATA[# Thymio-II program: fuzzy algorithm for approaching
+<node nodeId="{7b3a7760-96f3-4fa2-9f43-d2dbad6b6eb8}" name="Thymio-II Wireless"><![CDATA[# Thymio-II program: fuzzy algorithm for autonomous navigation
+
+# Adapted from Fuzzy code by Moti Ben-Ari
 # Copyright 2014 by Moti Ben-Ari
 # CreativeCommons BY-SA 3.0
 
@@ -39,15 +41,15 @@ var right # The value read from prox.horizontal[3]
 var far_right # The value read from prox.horizontal[4]
 var value
 var obstacle_detect # The value of the sensor location for the obstacle (multiplied by 10 compared to ECTE441)
-var obstacle_dist
+var obstacle_dist # Value of the distance to obstacle from sensors
 var ultra_sens_p[6] # Certainties of premises: no obstacle, left side, left, middle, right, right side
 var ultra_dis_p[3] # Certainties of premises: far, close, in front
 var left_wheel_c[5] # Certainties of consequents: rev_f, rev, zero, for, for_f
 var right_wheel_c[5] # Certainties of consequents: rev_f, rev, zero, for, for_f
 var temp           # Temporary variable for computing premises
-var temp2
+var temp2          # Additional temporary variable
 var temp_not # Temporary variable for computing NOT statements
-var temp_not_obs
+var temp_not_obs # Additional temporary variable for NOT statements
 
 var left_centers[5] = [-2, -1, 0, 1, 2] # Centers of output membership functions
 var right_centers[5] = [-2, -1, 0, 1, 2] # Centers of output membership functions
@@ -63,8 +65,8 @@ var crisp_right    # Crisp output
 var crisp_left     # Crisp output
 var i              # Loop index variable
 
-var theta
-var distance
+var theta # Angle to target in degrees
+var distance # Distance to target
 var theta_p[5] # Certainties of premises: right, small right, zero, small left, left
 var distance_p[2] # Certainties of premises: zero, close
 
@@ -82,7 +84,8 @@ onevent button.forward
 # Center button to stop
 onevent button.center
   callsub stop
-  
+
+# Wireless communication receive and store localisation data
 onevent target_tx
   theta = event.args[0]
   distance = event.args[1]
@@ -94,6 +97,8 @@ sub obstacle_location
   middle = prox.horizontal[2]
   right = prox.horizontal[3]
   far_right = prox.horizontal[4]
+  
+  # Create active sensor feedback data structure for fuzzy model
   
   if middle >= left and middle >= right and middle >= far_left and middle >= far_right and middle >= 50 then obstacle_detect = 0
     obstacle_dist = middle
@@ -239,12 +244,6 @@ sub fuzzify
 sub apply_rules
   call math.fill(right_wheel_c, 0)
   call math.fill(left_wheel_c, 0)
-    
-  # Rule 1: if far then right_vel = very fast and left_vel = very fast (MAY GET RID OF THIS)
-  #if ultra_dis_p[0] != 0 then
-   	#right_wheel_c[4] = ultra_dis_p[0]
-   	#left_wheel_c[4] = ultra_dis_p[0]
-  #end
 
   # Rule 1: if close and obstacle is left then left_vel = fast forward and right_vel = zero
   if ultra_dis_p[1] != 0 and ultra_sens_p[2] != 0 then
@@ -257,16 +256,8 @@ sub apply_rules
    	call math.min(right_wheel_c[4], ultra_dis_p[1], ultra_sens_p[4])
    	call math.min(left_wheel_c[2], ultra_dis_p[1], ultra_sens_p[4])
   end
-  
-  # Rule 3: if close and not right and not left then left_vel = forward and right_vel = forward
-  #if  ultra_dis_p[1] != 0 and ultra_sens_p[2] == 0 and ultra_sens_p[4] == 0 then
-	#temp = left_wheel_c[3]
-	#call math.max(left_wheel_c[4], temp, ultra_dis_p[1])
-	#temp = right_wheel_c[3]
-	#call math.max(right_wheel_c[4], temp, ultra_dis_p[1])
-  #end
 
-  # Rule 4: if near and obstacle is left_side then left_vel = reverse and right_vel = fast reverse
+  # Rule 3: if near and obstacle is left_side then left_vel = reverse and right_vel = fast reverse
   if ultra_dis_p[2] != 0 and ultra_sens_p[1] != 0 then 
    	call math.min(temp, ultra_dis_p[2], ultra_sens_p[1])
 	temp2 = left_wheel_c[1]
@@ -275,7 +266,7 @@ sub apply_rules
 	call math.max(right_wheel_c[0], temp, temp2)
   end
 
-  # Rule 5: if near and obstacle is left then left_vel = forward and right_vel = fast reverse
+  # Rule 4: if near and obstacle is left then left_vel = forward and right_vel = fast reverse
   if ultra_dis_p[2] != 0 and ultra_sens_p[2] != 0 then 
    	call math.min(temp, ultra_dis_p[2], ultra_sens_p[2])
 	temp2 = left_wheel_c[3]
@@ -284,7 +275,7 @@ sub apply_rules
 	call math.max(right_wheel_c[0], temp, temp2)
   end
 
-  # Rule 6: if near and obstacle is middle then left_vel = fast reverse and right_vel = fast forward
+  # Rule 5: if near and obstacle is middle then left_vel = fast reverse and right_vel = fast forward
   if ultra_dis_p[2] != 0 and ultra_sens_p[3] != 0 then 
    	call math.min(temp, ultra_dis_p[2], ultra_sens_p[3])
 	temp2 = left_wheel_c[0]
@@ -293,7 +284,7 @@ sub apply_rules
 	call math.max(right_wheel_c[4], temp, temp2)
   end
 
-  # Rule 7: if near and obstacle is right then left_vel = fast reverse and right_vel = forward
+  # Rule 6: if near and obstacle is right then left_vel = fast reverse and right_vel = forward
   if ultra_dis_p[2] != 0 and ultra_sens_p[4] != 0 then 
    	call math.min(temp, ultra_dis_p[2], ultra_sens_p[4])
 	temp2 = left_wheel_c[0]
@@ -302,7 +293,7 @@ sub apply_rules
 	call math.max(right_wheel_c[3], temp, temp2)
   end
 
-  # Rule 8: if near and obstacle is right side then left_vel = fast reverse and right_vel = reverse
+  # Rule 7: if near and obstacle is right side then left_vel = fast reverse and right_vel = reverse
   if ultra_dis_p[2] != 0 and ultra_sens_p[5] != 0 then 
    	call math.min(temp, ultra_dis_p[2], ultra_sens_p[5])
 	temp2 = left_wheel_c[0]
@@ -311,7 +302,7 @@ sub apply_rules
 	call math.max(right_wheel_c[1], temp, temp2)
   end
   
-  # Rule 9: if distance is not zero then left_vel = forward and right_vel = forward
+  # Rule 8: if distance is not zero then left_vel = forward and right_vel = forward
   temp_not = 100 - distance_p[0]
   temp_not_obs = 100 - ultra_dis_p[2]
   call math.min(temp, temp_not, temp_not_obs)
@@ -322,7 +313,7 @@ sub apply_rules
 	call math.max(right_wheel_c[3], temp, temp2)
   end
   
-  # Rule 10: if far and theta is right then left_vel = forward and right_vel = reverse
+  # Rule 9: if far and theta is right then left_vel = forward and right_vel = reverse
   if ultra_dis_p[0] != 0 and theta_p[0] != 0 then 
    	call math.min(temp, ultra_dis_p[0], theta_p[0])
 	temp2 = left_wheel_c[3]
@@ -331,7 +322,7 @@ sub apply_rules
 	call math.max(right_wheel_c[1], temp, temp2)
   end
   
-  # Rule 11: if far and theta is left then left_vel = reverse and right_vel = forward
+  # Rule 10: if far and theta is left then left_vel = reverse and right_vel = forward
   if ultra_dis_p[0] != 0 and theta_p[4] != 0 then 
    	call math.min(temp, ultra_dis_p[0], theta_p[4])
 	temp2 = left_wheel_c[1]
@@ -340,7 +331,7 @@ sub apply_rules
 	call math.max(right_wheel_c[3], temp, temp2)
   end
   
-  # Rule 12: if distance is zero then left_vel = zero and right_vel = zero
+  # Rule 11: if distance is zero then left_vel = zero and right_vel = zero
   if distance_p[0] != 0 then 
 	temp2 = left_wheel_c[2]
 	call math.max(left_wheel_c[2], distance_p[0], temp2)
