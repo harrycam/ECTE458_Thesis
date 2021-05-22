@@ -4,7 +4,7 @@ This is the GitHub repository for my ECTE458 Thesis project. It includes all the
 
 ## Software Folder
 
-Blah
+Contains the code for the SRL and Dual Objective controller in MATLAB. Also contains the code to back distill the control policies of the SRL controller onto the original Expert FLC.
 
 ## Hardware Folder
 
