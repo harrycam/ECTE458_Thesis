@@ -1,0 +1,90 @@
+[System]
+Name='distilled'
+Type='mamdani'
+Version=2.0
+NumInputs=4
+NumOutputs=2
+NumRules=20
+AndMethod='prod'
+OrMethod='probor'
+ImpMethod='min'
+AggMethod='max'
+DefuzzMethod='centroid'
+
+[Input1]
+Name='distance'
+Range=[0 10]
+NumMFs=2
+MF1='z':'trapmf',[0 0 0.1 0.15]
+MF2='close':'trimf',[0.152910052910053 0.552910052910053 9.05291005291005]
+
+[Input2]
+Name='ultrasonic'
+Range=[0 25]
+NumMFs=3
+MF1='close':'trimf',[18 20 22]
+MF2='in_front':'trimf',[22 25 30]
+MF3='far':'trapmf',[-1 0 10 15]
+
+[Input3]
+Name='theta'
+Range=[-180 180]
+NumMFs=5
+MF1='right':'trapmf',[-180 -108 -122 -30]
+MF2='0':'trimf',[-18 64 178]
+MF3='left':'trapmf',[38 94 178 180]
+MF4='right_small':'trimf',[-70 -55 -40]
+MF5='left_small':'trimf',[40 55 70]
+
+[Input4]
+Name='sensor'
+Range=[-10 6]
+NumMFs=6
+MF1='no_obs':'trapmf',[-9.5 -9.5 -8.5 -8.5]
+MF2='left_side':'trapmf',[-5.5 -5.5 -4.5 -4.5]
+MF3='left':'trapmf',[-3 -3 -2 -2]
+MF4='middle':'trapmf',[-0.5 -0.5 0.5 0.5]
+MF5='right':'trapmf',[2 3 3 3]
+MF6='right_side':'trapmf',[4.5 4.5 5.5 5.5]
+
+[Output1]
+Name='left_vel'
+Range=[-2 2]
+NumMFs=5
+MF1='rev_f':'gaussmf',[0.04247 -2]
+MF2='zero':'gaussmf',[0.04247 1.735e-18]
+MF3='for_f':'gaussmf',[0.04247 2]
+MF4='rev':'gaussmf',[0.04247 -1]
+MF5='for':'gaussmf',[0.04247 1]
+
+[Output2]
+Name='right_vel'
+Range=[-2 2]
+NumMFs=5
+MF1='rev_f':'gaussmf',[0.04247 -2]
+MF2='zero':'gaussmf',[0.04247 1.735e-18]
+MF3='for_f':'gaussmf',[0.04247 2]
+MF4='for':'gaussmf',[0.04247 1]
+MF5='rev':'gaussmf',[0.04247 -1]
+
+[Rules]
+-1 0 0 0, 3 3 (1) : 1
+0 3 1 0, 4 4 (1) : 1
+0 3 3 0, 5 5 (1) : 1
+0 2 0 3, 5 1 (1) : 1
+0 2 0 5, 1 4 (1) : 1
+0 2 0 4, 1 3 (1) : 1
+0 2 0 2, 2 1 (1) : 1
+0 2 0 6, 1 2 (1) : 1
+0 1 0 5, 2 4 (1) : 1
+0 1 0 3, 5 4 (1) : 1
+1 0 0 0, 2 2 (1) : 1
+2 2 2 5, 2 3 (1) : 1
+2 2 1 1, 5 2 (1) : 1
+1 2 2 3, 1 1 (1) : 1
+1 3 0 6, 2 0 (1) : 1
+1 0 1 1, 5 1 (1) : 1
+1 2 0 3, 0 2 (1) : 1
+0 2 4 1, 2 2 (1) : 1
+0 3 3 1, 5 4 (1) : 1
+2 1 2 1, 1 1 (1) : 1
